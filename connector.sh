@@ -8,6 +8,7 @@ NODES=("controller@192.168.122.213" "controller@192.168.122.187" "controller@192
 
 # Looping through nodes
 for NODE in "${NODES[@]}"; do 
+	echo "Connecting on node: " $NODE
 	scp "./execution.sh" "$NODE:/home/$USER/"
 	ssh $NODE 'bash -s' < "execution.sh"
 done
