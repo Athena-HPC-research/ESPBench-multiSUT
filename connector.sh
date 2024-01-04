@@ -2,7 +2,8 @@
 #!/bin/bash
 
 # List nodes here
-USER=controller # Please change according to your configuaration
+# Please change according to your configuaration
+USER=controller 
 NODES=("controller@192.168.122.213" "controller@192.168.122.187" "controller@192.168.122.163") 
 
 # Looping through nodes
