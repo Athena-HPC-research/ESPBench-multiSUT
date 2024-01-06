@@ -22,16 +22,16 @@ fi
 #requirements install#
 ######################
 # git
-printf "%s" $PASSWORD | sudo -S apt install git 
+printf "%s" $PASSWORD | sudo -S apt install git -y 
 
 # openjdk
-printf "%s" $PASSWORD | sudo -S apt install openjdk-$OPENJDK_VERSION-jre
+printf "%s" $PASSWORD | sudo -S apt install openjdk-$OPENJDK_VERSION-jre -y 
 
 # sbt
 echo "deb https://dl.bintray.com/sbt/debian/" | sudo tee -a /etc/apt/sources.list.d/sbt.list
 printf "%s" $PASSWORD | sudo -S apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
 printf "%s" $PASSWORD | sudo -S apt update
-printf "%s" $PASSWORD | sudo -S apt install sbt
+printf "%s" $PASSWORD | sudo -S apt install sbt -y 
 
 # I wronngly named my nodes controller, this part should be removed if you correctly named your nodes
 printf "%s" $PASSWORD | sudo -S usermod -l benchmarker controller
