@@ -3,8 +3,8 @@
 
 # List nodes here
 # Please change according to your configuaration
-USER=controller
-NODES=("controller@192.168.122.213" "controller@192.168.122.187" "controller@192.168.122.163") 
+USER=benchmarker
+NODES=("benchmarker@192.168.122.77" "benchmarker@192.168.122.77" "benchmarker@192.168.122.77") 
 
 # I made my machines share the same password, even though it promotes poor securtiy
 # I suggest the same, just because this is not a production grade enviroment
