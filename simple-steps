@@ -1,0 +1,13 @@
+1. Create User benchmarker(pass:benchmark) and make him sudo
+adduser benchmarker
+sudo usermode -aG sudo benchmarker
+
+2. Install Scala and sbt
+
+3. Install Based on the role of the server the needed packages
+3.1 postgres 9.6
+3.2 Apache Kafka and Zookeeper (and run as service
+3.3 DSPS servers
+3.3.1 Apache Spark
+3.3.2 Apache Flink
+3.3.3 Hazelcast jet
