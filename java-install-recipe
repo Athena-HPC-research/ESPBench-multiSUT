@@ -1,0 +1,6 @@
+# NOTE: THIS IS NOT A BASH SCRIPT BUT A LIST OF COMMANDS TO PASTE
+# if multiple jdks/jres are installed we can choose between them
+sudo update-alternatives --config java
+
+# the paper uses java 8 (we might need the jdk instead of the jre but we will find out)
+sudo apt install openjdk-8-jre
