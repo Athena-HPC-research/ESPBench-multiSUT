@@ -1,0 +1,13 @@
+# do this in all VMs(save in the default file path and leave the password empty)
+ssh-keygen -t rsa -b 4096
+# dont know if this is needed but i did it
+chmod 600 ~/.ssh/id_rsa
+# for each VM run visudo and add this line in the file:(yes it is unsafe, we aint in production)
+username ALL=(ALL) ALL
+
+# to be able to connect to different machines this is needed: (it will ask for the password of the user at the remote machine, only once for the setup)
+# get ip from ifconfig, check that ping IP works and then go ahead and do the following
+ssh-copy-id benchmarker@IP 
+# to test run:, it should not need a password
+ssh benchmarker@IP
+# VM 3 done
