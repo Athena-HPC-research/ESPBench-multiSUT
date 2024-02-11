@@ -1,4 +1,5 @@
 sudo adduser zookeeper
+su - zookeeper
 # do all of this as zookeeper user
 wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.12/zookeeper-3.4.12.tar.gz
 tar -xzvf zookeeper-3.4.12.tar.gz
