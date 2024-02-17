@@ -28,17 +28,15 @@ printf "%s" $PASSWORD | sudo -S apt install git -y
 printf "%s" $PASSWORD | sudo -S apt install openjdk-$OPENJDK_VERSION-jre -y 
 
 # sbt
-curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup
+curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs
+chmod +x cs && ./cs setup
 cs install scala:2.12.8
 printf "Installed scala and sbt with coursier cli\n"
 printf "Scala version:"
 echo scala -version
 printf "Sbt version:"
 echo sbt -version 
-
-# I wronngly named my nodes controller, this part should be removed if you correctly named your nodes
-printf "%s" $PASSWORD | sudo -S usermod -l benchmarker controller
-
+echo export PATH="$PATH:/home/benchmarker/.local/share/coursier/bin" >> ~/.bashrc
 #printf $PASSWORD | sudo -S printf $PASSWORD | passwd --stdin benchmarker
 
 # Add user to sudo group, again you may have done that already, comment this
