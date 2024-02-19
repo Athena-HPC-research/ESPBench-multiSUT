@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 object Configs extends Logging {
 
   val TopicNameSeparator = "-"
-  private val repositoryName = "ESPBench"
+  private val repositoryName = "ESPBench-multiSUT"
   private val relativeConfigPath = "/tools/commons/commons.conf"
   private val configPath: String = {
     var currDir = new java.io.File(".").getCanonicalPath
