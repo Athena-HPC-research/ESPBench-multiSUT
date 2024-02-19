@@ -8,16 +8,13 @@ master
 slaves
 
 [master]
-bench01 ansible_host=xxx.xxx.xx.xx
+bench01 ansible_host=192.168.69.3
 
 [slaves]
-bench02 ansible_host=xxx.xxx.xx.xx
-bench03 ansible_host=xxx.xxx.xx.xx
+bench02 ansible_host=192.168.69.3
 
 [kafka_cluster]
-bench05 ansible_host=xxx.xxx.xx.xx
-bench06 ansible_host=xxx.xxx.xx.xx
-bench07 ansible_host=xxx.xxx.xx.xx
+bench05 ansible_host=192.168.69.4
 
 [erp_db]
-bench04 ansible_host=xxx.xxx.xx.xx
+bench04 ansible_host=192.168.69.5
