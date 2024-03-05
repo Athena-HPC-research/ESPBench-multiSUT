@@ -47,7 +47,15 @@ def datasender_conf(ip_port_tuple_list,input_paths=["~/Benchmarks/ESB/Data/5Minu
 def generate_file_in(content,path):
     with open(path,'w') as file:
         file.write(content)
-
+def obj(obj_to_output,tabs):
+    total_string = ((tabs-1) * "\t") + "{" + "\n"
+    for property_name,property_value in obj_to_output.items():
+        val = property_value
+        if isinstance(val,str):
+            val = wrap_string(val)
+        # can add support for more later
+        total_string = total_string + (tabs * "\t") + property_equals(property_name,val) + "\n"
+    return total_string + ((tabs-1) * "\t") + "}"
 def property_equals(property_name, val):
     return f"{property_name} = {val}"
 
@@ -69,7 +77,7 @@ def tpc_gen_properties_conf(number_of_warehouses,output_dir):
 def apache_beam_properties(system,parallelism,spark_master,kafka_bootstrap_servers,db_url,db_name,db_user,db_password):
     spark_m = f"spark://{spark_master}:7077"
     jdbc_url = f"jdbc:postgresql://{db_url}:5432/{db_name}"
-    kafka_servers = ",".join(list(map(lambda x: f"{x}:9092",kafka_bootstrap_servers)))    
+    kafka_servers = ",".join(list(map(lambda x: f"{x}:9092",kafka_bootstrap_servers)))
     return f"""
     {property_equals("system",system)}
     {property_equals("parallelism",parallelism)}
@@ -80,34 +88,45 @@ def apache_beam_properties(system,parallelism,spark_master,kafka_bootstrap_serve
     """
 print("hello world")
 
+def commons_conf(topic_prefix,benchmark_run,query_configs_arr,kafka_bootstrap_servers,zookeeper_servers,sending_interval=10000000,sending_interval_time_unit="NANOSECONDS",duration=10,duration_time_unit="Minutes"):
+    kafka_servers = ",".join(list(map(lambda x: f"{x}:9092",kafka_bootstrap_servers)))
+    zookeeper = ",".join(list(map(lambda x: f"{x}:2181",zookeeper_servers)))
+    queries = ",\n".join(list(map(lambda x: obj(x,2),query_configs_arr)))
+    query_configs_str = "[" + "\n" + queries + "\n"+ "  ]"
+    return f"""
+    {property_equals("topic-prefix",wrap_string(topic_prefix))}
+    {property_equals("benchmark-run",benchmark_run)}
+    {property_equals("query-configs",query_configs_str)}
+    {property_equals("sending-interval",sending_interval)}
+    {property_equals("sending-interval-time-unit",wrap_string(sending_interval_time_unit))}
+    {property_equals("duration",duration)}
+    {property_equals("duration-time-unit",wrap_string(duration_time_unit))}
+    {property_equals("kafka-bootstrap-servers",wrap_string(kafka_servers))}
+    {property_equals("zookeeper-servers",wrap_string(zookeeper))}
+    """
+
 DRY_RUN = True
+def output_file_in(file_content,path,label):
+    if not DRY_RUN:
+        generate_file_in(file_content,path)
+    else:
+        print(f"Generating in path {path}")
+        print_string_with_filename_and_separator(label,file_content)
 
 def main():
     ds_conf = datasender_conf([("192.168.69.4")])
     ds_conf_path = "./tools/datasender/datasender.conf"
-    if not DRY_RUN:
-        generate_file_in(ds_conf,ds_conf_path)
-    else:
-        print(f"Generating in path {ds_conf_path}")
-        print_string_with_filename_and_separator("datasender.conf",ds_conf)
-    
+    output_file_in(ds_conf,ds_conf_path,"datasender.conf")    
     tpc_gen_file = tpc_gen_properties_conf(3,"data")
     tpc_gen_file_path = "./tools/tpc-c_gen/tpc-c.properties"
-    if not DRY_RUN:
-        generate_file_in(tpc_gen_file,tpc_gen_file_path)
-    else:
-        print(f"Generating in path {tpc_gen_file_path}")
-        print_string_with_filename_and_separator("tpc-c.properties",tpc_gen_file)
+    output_file_in(tpc_gen_file, tpc_gen_file_path,"tpc-c.properties")       
     apache_beam_file = apache_beam_properties("spark",1,"192.168.68.3",["192.168.69.4"],"192.168.69.5","hessebench","benchmarker","benchmark")
     apache_beam_file_path = "./implementation/beam/src/main/resources/beam.properties"
-    if not DRY_RUN:
-        generate_file_in(apache_beam_file,apache_beam_file_path)
-    else:
-        print(f"Generating in path {apache_beam_file_path}")
-        print_string_with_filename_and_separator("tpc-c.properties",apache_beam_file)
+    output_file_in(apache_beam_file,apache_beam_file_path,"beam.properties")
+    commons_conf_file = commons_conf("HPC-TEAM",1,[{"name":"Identity","number-of-streams":1}],["192.168.69.4"],["192.168.69.4"])
+    commons_conf_file_path = "./tools/commons/commons.conf"
+    output_file_in(commons_conf_file,commons_conf_file_path,"commons.conf")
 
-    # generate_file_in(tpc_gen_file,tpc_gen_file_path
-    
 main()
 
 
