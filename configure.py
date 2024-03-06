@@ -1,3 +1,5 @@
+import json
+import sys
 
 def print_string_with_filename_and_separator(filename,content):
     print(f"===========File: {filename} =============")
@@ -56,6 +58,10 @@ def obj(obj_to_output,tabs):
         # can add support for more later
         total_string = total_string + (tabs * "\t") + property_equals(property_name,val) + "\n"
     return total_string + ((tabs-1) * "\t") + "}"
+
+
+def db_conf():
+    pass
 def property_equals(property_name, val):
     return f"{property_name} = {val}"
 
@@ -71,7 +77,7 @@ def kafka_value_serializer_class():
 def tpc_gen_properties_conf(number_of_warehouses,output_dir):
     return f"""
     {property_equals("NUMBER_OF_WAREHOUSES",number_of_warehouses)}
-    {property_equals("OUTPUT_DIR",wrap_string(output_dir))} 
+    {property_equals("OUTPUT_DIR",output_dir)} 
     """
 
 def apache_beam_properties(system,parallelism,spark_master,kafka_bootstrap_servers,db_url,db_name,db_user,db_password):
@@ -113,20 +119,75 @@ def output_file_in(file_content,path,label):
         print(f"Generating in path {path}")
         print_string_with_filename_and_separator(label,file_content)
 
+
+def ansible_host(machine_name,ip):
+    return f"{machine_name} ansible_host={ip}"
+
+def ansible_hosts(spark_ips,kafka_ips,db_ip):
+    index = 1;
+    # need to somehow create a lambda that modifies the index
+    machine_prefix = "bench"
+    spark_master = ansible_host(machine_prefix + "0" + str(index),spark_ips[0])
+    spark_slaves_str = ""
+    for spark_host in spark_ips[1:]:
+        index = index + 1
+        spark_slaves_str = spark_slaves_str + ansible_host(machine_prefix + "0" + str(index),spark_host) + "\n"
+    kafka_str = ""
+    for kafka_host in kafka_ips[1:]:
+        index = index + 1
+        kafka_str = kafka_str + ansible_host(machine_prefix + "0" + str(index),kafka_host) + "\n"
+    index = index + 1
+    db_host = ansible_host(machine_prefix + "0" + str(index),db_ip)
+
+    return f"""
+    [all_nodes:children]
+    streaming_cluster
+    kafka_cluster
+    erp_db
+
+    [streaming_cluster:children]
+    master
+    slaves
+
+    [master]
+    {spark_master}
+
+    [slaves]
+    {spark_slaves_str}
+
+    [kafka_cluster]
+    {kafka_str}
+
+    [erp_db]
+    {db_host}
+    """
+
+def read_from_json(filename):
+    return json.load(filename)
+
+
 def main():
+    config_data = read_from_json(sys.argv[1])
     ds_conf = datasender_conf([("192.168.69.4")])
     ds_conf_path = "./tools/datasender/datasender.conf"
-    output_file_in(ds_conf,ds_conf_path,"datasender.conf")    
+    output_file_in(ds_conf,ds_conf_path,"datasender.conf")
+
     tpc_gen_file = tpc_gen_properties_conf(3,"data")
     tpc_gen_file_path = "./tools/tpc-c_gen/tpc-c.properties"
-    output_file_in(tpc_gen_file, tpc_gen_file_path,"tpc-c.properties")       
+    output_file_in(tpc_gen_file, tpc_gen_file_path,"tpc-c.properties")
+
     apache_beam_file = apache_beam_properties("spark",1,"192.168.68.3",["192.168.69.4"],"192.168.69.5","hessebench","benchmarker","benchmark")
     apache_beam_file_path = "./implementation/beam/src/main/resources/beam.properties"
     output_file_in(apache_beam_file,apache_beam_file_path,"beam.properties")
+
     commons_conf_file = commons_conf("HPC-TEAM",1,[{"name":"Identity","number-of-streams":1}],["192.168.69.4"],["192.168.69.4"])
     commons_conf_file_path = "./tools/commons/commons.conf"
     output_file_in(commons_conf_file,commons_conf_file_path,"commons.conf")
 
+    ansible_hosts_file = ansible_hosts(["192.168.69.3","192.168.69.4"],["192.168.69.5","192.168.69.6"],"192.168.69.6")
+    ansible_hosts_file_path = "./tools/configuration/hosts"
+    output_file_in(ansible_hosts_file,ansible_hosts_file_path,"hosts")
+    
 main()
 
 
