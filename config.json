@@ -1,7 +1,8 @@
 {
 	"kafka":{
 		"servers":[
-			"192.168.0.1"
+			"192.168.0.1",
+			"192.168.0.2"
 		]
 	},
 	"database":{
@@ -13,5 +14,24 @@
 	},
 	"zookeeper":{
 		"servers":["192.168.0.1"]
+	},
+	"spark":{
+		"master":"192.168.0.1",
+		"servers":["192.168.150.1","192.168.150.2"],
+		"parallelism":1	
+	},
+	"benchmark":{
+		"topic-prefix":"hpc-team",
+		"benchmark-run":1,
+		"sending-interval":10000,
+		"sending-interval-time-unit":"NANOSECONDS",
+		"duration":5,
+		"duration-time-unit":"MINUTES",
+		"queries":[
+			{
+				"name":"Identity",
+				"number-of-streams":1
+			}
+		]
 	}
 }

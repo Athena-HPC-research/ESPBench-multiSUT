@@ -168,52 +168,56 @@ class AnsibleHostsConf:
         self.label = "hosts"
         self.description = "Ansible hosts file, provides the IP for all the subsystems of the benchmark"
 
-    def file_content(self,spark_ips,kafka_ips,db_ip):
+    def file_content(self,spark_m,spark_servers,kafka_ips,db_ip):
         index = 1;
         # need to somehow create a lambda that modifies the index
         machine_prefix = "bench"
-        spark_master = ansible_host(machine_prefix + "0" + str(index),spark_ips[0])
+        spark_master = ansible_host(machine_prefix + "0" + str(index),spark_m)
         spark_slaves_str = ""
-        for spark_host in spark_ips[1:]:
+        for spark_host in spark_servers:
             index = index + 1
             spark_slaves_str = spark_slaves_str + ansible_host(machine_prefix + "0" + str(index),spark_host) + "\n"
         kafka_str = ""
-        for kafka_host in kafka_ips[1:]:
+        for kafka_host in kafka_ips:
             index = index + 1
             kafka_str = kafka_str + ansible_host(machine_prefix + "0" + str(index),kafka_host) + "\n"
         index = index + 1
         db_host = ansible_host(machine_prefix + "0" + str(index),db_ip)
 
         return f"""
-        [all_nodes:children]
-        streaming_cluster
-        kafka_cluster
-        erp_db
+[all_nodes:children]
+streaming_cluster
+kafka_cluster
+erp_db
 
-        [streaming_cluster:children]
-        master
-        slaves
+[streaming_cluster:children]
+master
+slaves
 
-        [master]
-        {spark_master}
+[master]
+{spark_master}
 
-        [slaves]
-        {spark_slaves_str}
+[slaves]
+{spark_slaves_str}
 
-        [kafka_cluster]
-        {kafka_str}
+[kafka_cluster]
+{kafka_str}
 
-        [erp_db]
-        {db_host}
-        """
+[erp_db]
+{db_host}
+"""
 
     def read_from_json(self):
         # in self.json should be the file string, or the parsed thing to only do it once
-        return "",""
+        spark_ips = self.json["spark"]["servers"]
+        spark_master = self.json["spark"]["master"]
+        db_ip = self.json["database"]["server"]
+        kafka = self.json["kafka"]["servers"]
+        return spark_master,spark_ips,kafka,db_ip
 
     def output_file(self):
-        args_for_file = self.read_from_json()
-        file_content=""
+        spark_m,spark_ips,kafka,db_ip = self.read_from_json()
+        file_content= self.file_content(spark_m,spark_ips,kafka,db_ip)
         if self.to_file:
             generate_file_in(file_content,self.file_path)
         else:
@@ -228,10 +232,13 @@ class ESPBenchCommonsConf:
         self.label = "commons.conf"
         self.description = "Provides the actual ESPBench configuration, not the tools, but the whole benchmark, how many runs, queries etc."
 
-    def file_content(topic_prefix,benchmark_run,query_configs_arr,kafka_bootstrap_servers,zookeeper_servers,sending_interval=10000000,sending_interval_time_unit="NANOSECONDS",duration=10,duration_time_unit="Minutes"):
+    def file_content(self,topic_prefix,benchmark_run,query_configs_arr,kafka_bootstrap_servers,zookeeper_servers,sending_interval=10000000,sending_interval_time_unit="NANOSECONDS",duration=10,duration_time_unit="Minutes"):
         kafka_servers = ",".join(list(map(lambda x: f"{x}:9092",kafka_bootstrap_servers)))
         zookeeper = ",".join(list(map(lambda x: f"{x}:2181",zookeeper_servers)))
-        queries = ",\n".join(list(map(lambda x: obj(x,2),query_configs_arr)))
+        if query_configs_arr == None:
+            queries = ""
+        else:
+            queries = ",\n".join(list(map(lambda x: obj(x,2),query_configs_arr)))
         query_configs_str = "[" + "\n" + queries + "\n"+ "  ]"
         return f"""
         topic-prefix = {wrap_string(topic_prefix)}
@@ -247,11 +254,20 @@ class ESPBenchCommonsConf:
 
     def read_from_json(self):
         # in self.json should be the file string, or the parsed thing to only do it once
-        return "",""
+        topic_prefix = self.json["benchmark"]["topic-prefix"]
+        benchmark_run = self.json["benchmark"]["benchmark-run"]
+        sending_interval = self.json["benchmark"]["sending-interval"]
+        sending_interval_time_unit = self.json["benchmark"]["sending-interval-time-unit"]
+        duration = self.json["benchmark"]["duration"]
+        duration_time_unit = self.json["benchmark"]["duration-time-unit"]
+        kafka_servers = self.json["kafka"]["servers"]
+        zookeeper_servers = self.json["zookeeper"]["servers"]
+        queries = self.json["benchmark"]["queries"]
+        return topic_prefix,benchmark_run,queries,sending_interval,sending_interval_time_unit,duration,duration_time_unit,kafka_servers,zookeeper_servers
 
     def output_file(self):
-        args_for_file = self.read_from_json()
-        file_content=""
+        t_prefix,b_run,queries,s_interval,s_interval_time_unit,d,d_time_unit,kafka,zookeeper = self.read_from_json()
+        file_content=self.file_content(t_prefix,b_run,queries,kafka,zookeeper,s_interval,s_interval_time_unit,d,d_time_unit)
         if self.to_file:
             generate_file_in(file_content,self.file_path)
         else:
@@ -274,18 +290,20 @@ class ApacheBeamConf:
         system = {system}
         parallelism = {parallelism}
         spark-master = {wrap_string(spark_m)}
+        jdbc_url = {jdbc_url}
         kafka-bootstrap-servers = {wrap_string(kafka_servers)}
         db-user = {wrap_string(db_user)}
         db-password = {wrap_string(db_password)}
         """
 
     def read_from_json(self):
+
         # in self.json should be the file string, or the parsed thing to only do it once
-        return "",""
+        return "spark",self.json["spark"]["parallelism"],self.json["spark"]["master"],self.json["kafka"]["servers"],self.json["database"]["server"],self.json["database"]["db_name"],self.json["database"]["db_user"],self.json["database"]["db_password"]
 
     def output_file(self):
-        args_for_file = self.read_from_json()
-        file_content=""
+        system,parallelism,spark_master,kafka,db_url,db_name,db_user,db_password = self.read_from_json()
+        file_content = self.file_content(system,parallelism,spark_master,kafka,db_url,db_name,db_user,db_password)
         if self.to_file:
             generate_file_in(file_content,self.file_path)
         else:
@@ -306,7 +324,11 @@ def main():
     # content = tpc_conf.file_content(3,"data")
     # print(content)
     esp_conf = ESPBenchCommonsConf(json_data)
+    esp_conf.output_file()
     ansible_conf = AnsibleHostsConf(json_data)
+    ansible_conf.output_file()
+    apache_beam_conf = ApacheBeamConf(json_data)
+    apache_beam_conf.output_file()
 main()
 
 
