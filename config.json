@@ -1,0 +1,17 @@
+{
+	"kafka":{
+		"servers":[
+			"192.168.0.1"
+		]
+	},
+	"database":{
+		"server":"192.168.0.1",
+		"db_name":"esp-bench",
+		"db_user":"hpc-team",
+		"db_password":"password",
+		"server_name":"hpc-bench"	
+	},
+	"zookeeper":{
+		"servers":["192.168.0.1"]
+	}
+}

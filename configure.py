@@ -1,6 +1,8 @@
 import json
 import sys
-
+def read_json_into_dict(filename):
+    with open(filename,'r') as f:
+        return json.load(f)
 def print_string_with_filename_and_separator(filename,content):
     print(f"===========File: {filename} =============")
     print(content)
@@ -117,12 +119,13 @@ class DatasenderAppConf:
         """
 
     def read_from_json(self):
-        # in self.json should be the file string, or the parsed thing to only do it once
-        return "",""
+        #the parsed thing to only do it once
+        db_info = self.json["database"]
+        return db_info["db_name"],db_info["db_user"],db_info["db_password"],db_info["server_name"],20
 
     def output_file(self):
-        args_for_file = self.read_from_json()
-        file_content=""
+        db_name,db_user,db_password,server_name,num_threads = self.read_from_json()
+        file_content=self.file_content(db_name,db_user,db_password,server_name,num_threads)
         if self.to_file:
             generate_file_in(file_content,self.file_path)
         else:
@@ -144,7 +147,7 @@ class TpcGenPropertiesConf:
         """
 
     def read_from_json(self):
-        # in self.json should be the file string, or the parsed thing to only do it once
+        #the parsed thing, just do self.json["prop"]
         return "",""
 
     def output_file(self):
@@ -289,13 +292,21 @@ class ApacheBeamConf:
             print_string_with_filename_and_separator(self.label,file_content)
 
 def main():
-    ds_conf = DatasenderConf("")
+    if len(sys.argv) < 2:
+        raise ValueException("did not provide a json file for config")
+    json_config = sys.argv[1]
+    print("Reading from argument: ", sys.argv[1])
+    json_data = read_json_into_dict(sys.argv[1])
+    print("The data is: ", json_data)
+    ds_conf = DatasenderConf(json_data)
+    ds_app_conf = DatasenderAppConf(json_data)
+    ds_app_conf.output_file()
     content = ds_conf.file_content([("192.168.69.4")])
-    tpc_conf = TpcGenPropertiesConf("")
-    content = tpc_conf.file_content(3,"data")
-    print(content)
-    esp_conf = ESPBenchCommonsConf("")
-    ansible_conf = AnsibleHostsConf("")
+    tpc_conf = TpcGenPropertiesConf(json_data)
+    # content = tpc_conf.file_content(3,"data")
+    # print(content)
+    esp_conf = ESPBenchCommonsConf(json_data)
+    ansible_conf = AnsibleHostsConf(json_data)
 main()
 
 
