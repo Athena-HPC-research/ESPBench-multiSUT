@@ -3,6 +3,7 @@ ssh-keygen -t rsa -b 4096
 # dont know if this is needed but i did it
 chmod 600 ~/.ssh/id_rsa
 # for each VM run visudo and add this line in the file:(yes it is unsafe, we aint in production)
+# this is just a line to be added on the /etc/sudoers file
 username ALL=(ALL) ALL
 
 # to be able to connect to different machines this is needed: (it will ask for the password of the user at the remote machine, only once for the setup)
